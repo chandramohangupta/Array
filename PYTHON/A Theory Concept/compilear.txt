@@ -1,0 +1,6 @@
+Compilar and Interpretor
+
+Compilar    : Compilar is all code comple one time,
+Interpretor : Interpretor is comple line by line code,
+
+

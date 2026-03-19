@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+         :root {
+            --bg: #0f0f0f;
+            --panel: #1a1a1a;
+            --x: #ff4d4d;
+            --o: #4dafff;
+            --line: #2e2e2e;
+            --text: #f0f0f0;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            letter-spacing: 0.12em;
+            background: linear-gradient(90deg, var(--x), var(--o));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .scoreboard {
+            display: flex;
+            gap: 24px;
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+        }
+        
+        .score-box {
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 10px 20px;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .score-box span {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        
+        .score-box.x span {
+            color: var(--x);
+        }
+        
+        .score-box.o span {
+            color: var(--o);
+        }
+        
+        .score-box.draw span {
+            color: #aaa;
+        }
+        
+        .status {
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            height: 1.4em;
+            transition: opacity 0.2s;
+        }
+        
+        .status.x {
+            color: var(--x);
+        }
+        
+        .status.o {
+            color: var(--o);
+        }
+        
+        .status.win {
+            animation: pulse 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: var(--panel);
+            padding: 12px;
+            border-radius: 16px;
+            width: min(360px, 90vw);
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: var(--bg);
+            border-radius: 10px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 10vw, 4rem);
+            cursor: pointer;
+            border: none;
+            transition: background 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cell:hover:not(.taken) {
+            background: #222;
+            transform: scale(0.96);
+        }
+        
+        .cell.x {
+            color: var(--x);
+            cursor: default;
+        }
+        
+        .cell.o {
+            color: var(--o);
+            cursor: default;
+        }
+        
+        .cell.win-cell {
+            background: #1e1e1e;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        
+        .btn {
+            background: none;
+            border: 2px solid #333;
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            padding: 10px 28px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        
+        .btn:hover {
+            border-color: #888;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Tic Tac Toe</h1>
+
+    <div class="scoreboard">
+        <div class="score-box x">X <span id="sx">0</span></div>
+        <div class="score-box draw">DRAW <span id="sd">0</span></div>
+        <div class="score-box o">O <span id="so">0</span></div>
+    </div>
+
+    <div class="status" id="status">X's TURN</div>
+
+    <div class="board" id="board">
+        <button class="cell" onclick="play(0)"></button>
+        <button class="cell" onclick="play(1)"></button>
+        <button class="cell" onclick="play(2)"></button>
+        <button class="cell" onclick="play(3)"></button>
+        <button class="cell" onclick="play(4)"></button>
+        <button class="cell" onclick="play(5)"></button>
+        <button class="cell" onclick="play(6)"></button>
+        <button class="cell" onclick="play(7)"></button>
+        <button class="cell" onclick="play(8)"></button>
+    </div>
+
+    <button class="btn" onclick="reset()">NEW GAME</button>
+
+    <script>
+        const WINS = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+        let board = Array(9).fill(null);
+        let turn = 'X';
+        let over = false;
+        let score = {
+            X: 0,
+            O: 0,
+            D: 0
+        };
+
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+
+        function updateStatus(msg, cls) {
+            status.textContent = msg;
+            status.className = 'status ' + (cls || '');
+        }
+
+        function play(i) {
+            if (over || board[i]) return;
+            board[i] = turn;
+            cells[i].textContent = turn;
+            cells[i].classList.add(turn.toLowerCase(), 'taken');
+
+            const win = WINS.find(w => w.every(j => board[j] === turn));
+            if (win) {
+                win.forEach(j => cells[j].classList.add('win-cell'));
+                score[turn]++;
+                updateScores();
+                updateStatus(turn + ' WINS!', turn.toLowerCase() + ' win');
+                over = true;
+                return;
+            }
+            if (board.every(v => v)) {
+                score.D++;
+                updateScores();
+                updateStatus("IT'S A DRAW", '');
+                over = true;
+                return;
+            }
+            turn = turn === 'X' ? 'O' : 'X';
+            updateStatus(turn + "'S TURN", turn.toLowerCase());
+        }
+
+        function updateScores() {
+            document.getElementById('sx').textContent = score.X;
+            document.getElementById('so').textContent = score.O;
+            document.getElementById('sd').textContent = score.D;
+        }
+
+        function reset() {
+            board = Array(9).fill(null);
+            turn = 'X';
+            over = false;
+            cells.forEach(c => {
+                c.textContent = '';
+                c.className = 'cell';
+            });
+            updateStatus("X'S TURN", 'x');
+        }
+
+        updateStatus("X'S TURN", 'x');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,5 @@
+Topics of full course 
+
+1. Basic print fuction
+2. All operator , arthematic, logic used
+3. 
